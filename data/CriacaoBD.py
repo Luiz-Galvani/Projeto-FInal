@@ -2,9 +2,9 @@ import sqlite3
 import pandas as pd
 
 def criarTable():
-    df = pd.read_csv("data\\resumo_anual_2025.csv", sep = ';', encoding = 'latin-1')
+    df = pd.read_csv("data/resumo_anual_2025.csv", sep = ';', encoding = 'latin-1')
 
-    conn = sqlite3.connect("/data/voos.db")
+    conn = sqlite3.connect("data/voos.db")
     cursor = conn.cursor()
 
     cursor.execute('''
