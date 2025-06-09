@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 st.markdown("<h1 style='text-align: center;'>Dashboard</h1>", unsafe_allow_html=True)
 
@@ -73,7 +74,30 @@ with col1.container(border=True):
                   y_label='Quantidade',
                   )
 
-
 # Gráfico de Pizza Doméstico/Internacional
+cursor.execute("SELECT tipo_voo, COUNT(*) AS total_voos FROM voos GROUP BY tipo_voo")
+tipo_voo = []
+total_voos = []
+for row in cursor.fetchall():
+    tipo_voo.append(row[0])
+    total_voos.append(row[1])
+
+st.write(tipo_voo)
+
+data_tipos = pd.DataFrame({
+    'Tipo': tipo_voo,
+    'Quantidade': total_voos
+})
+
+with col2.container(border=True):
+    fig = px.pie(
+                data_tipos,
+                values='Quantidade',
+                names='Tipo',
+                height=415
+            )      
+    st.plotly_chart(fig)
+
+
 # Quais regiões geram mais passageiros
 # Gráfico de barras de passageiros por empresa
