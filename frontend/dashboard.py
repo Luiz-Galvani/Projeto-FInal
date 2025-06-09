@@ -1,5 +1,8 @@
 import streamlit as st  
 import sqlite3
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 st.markdown("<h1 style='text-align: center;'>Dashboard</h1>", unsafe_allow_html=True)
 
@@ -35,8 +38,42 @@ empresa_mais_voos = cursor.fetchone()[0]
 
 col4.container(border=True).metric("Empresa com mais voos:", f'{empresa_mais_voos}')
 
+st.divider()
+
 ## Gráficos 
 # Evolução mensal de passageiros e carga
+cursor.execute("SELECT mes, SUM(passageiros_pagos + passageiros_gratis) AS total_passageiros, SUM(carga_paga_kg + carga_gratis_kg) AS total_carga FROM voos GROUP BY mes ORDER BY mes")
+meses = []
+passageiros = []
+carga = []
+for row in cursor.fetchall():
+    meses.append(row[0])
+    passageiros.append(row[1])
+    carga.append(row[2])
+
+data = pd.DataFrame({
+    'Mes': meses,
+    'Passageiros': passageiros,
+    'Carga': carga
+})
+
+col1, col2 = st.columns(2)
+
+with col1.container(border=True):
+    
+    eixo_y = 'Passageiros'
+    
+    st.markdown("<h3 style='text-align: center;'>Quantidade de Passageiros e Carga x Quantidade</h3>", unsafe_allow_html=True)
+
+    st.line_chart(data,
+                  x='Mes',
+                  y=['Passageiros', 'Carga'],
+                  color=["#FF0000", "#0000FF"],
+                  x_label='Meses',
+                  y_label='Quantidade',
+                  )
+
+
 # Gráfico de Pizza Doméstico/Internacional
 # Quais regiões geram mais passageiros
 # Gráfico de barras de passageiros por empresa
