@@ -203,4 +203,3 @@ with col2.container(border=True):
     title_x=0.23  # Centraliza o título
     )
     st.plotly_chart(fig)
-
