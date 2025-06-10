@@ -294,6 +294,69 @@ else:
 
 st.divider()
 st.header("⛽ Consumo de Combustível por Empresa")
+
+@st.cache_data
+def carregar_consumo_combustivel():
+    query = """
+    SELECT 
+        empresa_nome,
+        SUM(combustivel_litros) AS total_consumo_litros
+    FROM voos
+    GROUP BY empresa_nome
+    ORDER BY total_consumo_litros DESC
+    LIMIT 10  -- Top 10 for scatter
+    """
+    return pd.read_sql_query(query, conn)
+
+df_consumo = carregar_consumo_combustivel()
+if df_consumo.empty:
+    st.warning("Nenhum dado de consumo de combustível encontrado.")
+else:
+    # Merge with carregar_dados for additional metrics
+    df = carregar_dados()  # Assumed to include total_distancia_km, total_decolagens
+    df_consumo = df_consumo.merge(
+        df[["empresa_nome", "total_distancia_km", "total_decolagens"]], 
+        on="empresa_nome", 
+        how="left"
+    )
     
+    # Calculate fuel efficiency (liters per km)
+    df_consumo["litros_por_km"] = df_consumo["total_consumo_litros"] / df_consumo["total_distancia_km"]
+    
+    # Bubble scatter plot
+    fig_consumo = px.scatter(
+        df_consumo,
+        x="total_consumo_litros",
+        y="litros_por_km",
+        size="total_decolagens",
+        color="empresa_nome",
+        labels={
+            "total_consumo_litros": "Consumo Total (litros)",
+            "litros_por_km": "Litros por km",
+            "total_decolagens": "Decolagens",
+            "empresa_nome": "Empresa"
+        },
+        title="Consumo de Combustível vs Eficiência (Top 10)",
+        color_discrete_sequence=px.colors.qualitative.Plotly,
+        hover_data={"total_distancia_km": ":.0f", "total_decolagens": ":.0f"}
+    )
+    fig_consumo.update_traces(
+        hovertemplate="<b>%{data.name}</b><br>Consumo: %{x:,.0f} litros<br>Litros/km: %{y:.2f}<br>Distância: %{customdata[0]:,.0f} km<br>Decolagens: %{customdata[1]:,.0f}<extra></extra>",
+        marker=dict(sizemode="area", sizemin=10, opacity=0.7)
+    )
+    fig_consumo.update_layout(
+        showlegend=False,
+        height=400,
+        xaxis={"title": "Consumo Total (litros)", "tickformat": ",.0f"},
+        yaxis={"title": "Litros por km", "tickfont": {"size": 10}},
+        margin={"t": 100, "b": 50, "l": 50, "r": 50},
+        hovermode="closest"
+    )
+    st.plotly_chart(fig_consumo, use_container_width=True)
+
+st.divider()
+st.header("🔁 Eficiência Operacional Comparada")
+
+
 # --- Fim da Seção ---
 conn.close()
