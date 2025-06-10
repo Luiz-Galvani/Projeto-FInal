@@ -18,7 +18,7 @@ def main():
     )
 
     dashboard_page = st.Page("frontend/dashboard.py", title="Dashboard", icon="📊", url_path="/dashboard")
-    aeroportos = st.Page("frontend/aeroportos.py", title="Aeroportos", icon="🛫", url_path="/aeroportos") 
+    aeroportos = st.Page("frontend/aeroportos.py", title="Análise de Demanda e Cobertura", icon="🛫", url_path="/aeroportos") 
     empresas = st.Page("frontend/empresas.py", title="Benchmark entre Empresas", icon="✈️", url_path="/empresas") 
     eficiencia = st.Page("frontend/eficiencia.py", title="Análise de Desempenho Operacional", icon="📈", url_path="/eficiencia")
 
