@@ -153,6 +153,18 @@ with col1.container(border=True):
                     )
         st.plotly_chart(fig)
 
+    
 ## Dristribuição de Natures dos Voos (Gráfico de Pizza)
 # Doméstico vs Internacional 
+with col2.container(border=True):
+    cursor.execute('SELECT natureza, COUNT(decolagens) AS total_voos FROM voos GROUP BY natureza')
+    column_names = [description[0] for description in cursor.description]
+    rows = cursor.fetchall()
+
+    df_natureza = pd.DataFrame(rows, columns=column_names)
+
+    fig = px.pie(df_natureza,
+                 names='natureza'
+    )
+    st.plotly_chart(fig)
 
