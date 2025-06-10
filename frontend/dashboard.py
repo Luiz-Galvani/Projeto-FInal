@@ -164,7 +164,8 @@ with col2.container(border=True):
     df_natureza = pd.DataFrame(rows, columns=column_names)
 
     fig = px.pie(df_natureza,
-                 names='natureza'
+                 names='natureza',
+                 values='total_voos'
     )
     st.plotly_chart(fig)
 
