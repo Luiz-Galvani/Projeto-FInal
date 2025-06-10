@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 
-st.markdown("<h1 style='text-align: center;'>Dashboard</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>📊 Dashboard </h1>", unsafe_allow_html=True)
 
 st.divider()
 
