@@ -7,7 +7,7 @@ import plotly.express as px
 
 st.markdown("<h1 style='text-align: center;'>📊 Dashboard </h1>", unsafe_allow_html=True)
 
-st.divider()
+st.subheader('', divider=True)
 
 conn = sqlite3.connect("data/voos.db")
 cursor = conn.cursor()
@@ -63,7 +63,7 @@ combustivel_total = cursor.fetchone()[0]
 with col2.container(border=True):
     st.markdown(f"<h4 style='text-align: center;'> Consumo Total de Combustível <br> {combustivel_total}</h4>", unsafe_allow_html=True)
 
-st.divider()
+st.subheader('', divider=True)
 
 ## Evolução Temporal (Gráfico de Linhas)
 # Passageiros pagantes e gratuitos
