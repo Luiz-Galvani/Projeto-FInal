@@ -260,6 +260,40 @@ with tabs[1]:
 
 st.divider()
 st.header("🚀 Decolagens vs Distância Voada")
+
+# 1) Puxa os totais por empresa
+df = carregar_dados()
+
+if df.empty:
+    st.warning("Nenhum dado disponível.")
+else:
+    df_top = df.nlargest(10, 'total_decolagens')
+
+    fig = px.scatter(
+        df_top,
+        x='total_decolagens',
+        y='total_distancia_km',
+        hover_name='empresa_nome',
+        labels={
+            'total_decolagens':'Decolagens',
+            'total_distancia_km':'Distância Voada (km)'
+        },
+        title=None,            
+        height=400
+    )
+
+    fig.update_traces(marker=dict(size=12, opacity=0.7))
+    fig.update_layout(
+        xaxis=dict(tickformat="d"),
+        yaxis=dict(tickformat="~s"),
+        showlegend=False,
+        margin=dict(l=40, r=20, t=20, b=40)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+st.header("⛽ Consumo de Combustível por Empresa")
     
 # --- Fim da Seção ---
 conn.close()
