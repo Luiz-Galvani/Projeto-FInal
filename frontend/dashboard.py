@@ -13,24 +13,35 @@ conn = sqlite3.connect("data/voos.db")
 cursor = conn.cursor()
 
 ## Big Numbers
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
+
 # Total de Passageiros
 cursor.execute('SELECT SUM(passageiros_pagos + passageiros_gratis) FROM voos')
 total_passageiros = cursor.fetchone()[0]
 
-col1.container(border=True).metric('Total de Passageiros', f'{int(total_passageiros)}')
+with col1.container(border=True):
+    st.markdown(f"<h4 style='text-align: center;'> Total de Passageiros <br> {total_passageiros} </h4>", unsafe_allow_html=True)
 
 # Total de Carga (Kg)
-cursor.execute('SELECT SUM(carga_paga_kg + carga_gratis_kg + correio_kg + bagagem_kg) FROM voos')
+cursor.execute('SELECT SUM(carga_paga_kg + carga_gratis_kg) FROM voos')
 carga_total = cursor.fetchone()[0]
 
-col2.container(border=True).metric('Carga Total', f'{carga_total:.2f} Kg')
+with col2.container(border=True):
+    st.markdown(f"<h4 style='text-align: center;'> Carga Total <br> {carga_total} Kg</h4>", unsafe_allow_html=True)
+
+# Total de Correio
+cursor.execute('SELECT SUM(correio_kg) FROM voos')
+correio_total = cursor.fetchone()[0]
+
+with col3.container(border=True):
+    st.markdown(f"<h4 style='text-align: center;'> Total de Correios <br> {correio_total} Kg</h4>", unsafe_allow_html=True)
 
 # Total de Voos (Decolagens)
 cursor.execute('SELECT SUM(decolagens) FROM voos')
 total_decolagens = cursor.fetchone()[0]
 
-col3.container(border=True).metric('Total de Decolagens', f'{int(total_decolagens)}')
+with col4.container(border=True):
+    st.markdown(f"<h4 style='text-align: center;'> Total de Decolagens <br> {int(total_decolagens)}</h4>", unsafe_allow_html=True)
 
 # Total de Distância Percorrida
 cursor.execute('SELECT SUM(distancia_voada_km) FROM voos')
@@ -42,13 +53,15 @@ col1, col2 = st.columns(2)
 cursor.execute("SELECT SUM(rpk) / SUM(ask) AS taxa_ocupacao FROM voos")
 taxa_ocupacao = cursor.fetchone()[0]
 
-col1.container(border=True).metric('Média de Ocupação (RPK / ASK)', f'{taxa_ocupacao:.2%}')
+with col1.container(border=True):
+    st.markdown(f"<h4 style='text-align: center;'> Média de Ocupação (RPK / ASK) <br> {taxa_ocupacao:.2%}</h4>", unsafe_allow_html=True)
 
 # Consumo Total de Combustível
 cursor.execute('SELECT SUM(combustivel_litros) FROM voos')
 combustivel_total = cursor.fetchone()[0]
 
-col2.container(border=True).metric('Consumo Total de Combustível', f'{int(combustivel_total)}')
+with col2.container(border=True):
+    st.markdown(f"<h4 style='text-align: center;'> Consumo Total de Combustível <br> {combustivel_total}</h4>", unsafe_allow_html=True)
 
 st.divider()
 
@@ -95,7 +108,13 @@ with col1.container(border=True):
         fig = px.line(df_pass,
                     x='mes_nome',
                     y='total_passageiros',
-                    labels={'mes_nome': 'Mês', 'total_passageiros': 'Total de Passageiros'})
+                    labels={'mes_nome': 'Mês', 'total_passageiros': 'Total de Passageiros'},
+                    title='Desempenho Operacional: Volume de Passageiros Transportados por Mês'
+                    )
+        fig.update_layout(
+            margin=dict(l=10, r=30, t=50, b=0),  # Margens para evitar cortes
+            title_x=0.1  # Centraliza o título
+        )
         st.plotly_chart(fig)
 
     with tab2:
@@ -122,8 +141,13 @@ with col1.container(border=True):
         fig = px.line(df_carga,
                     x='mes_nome',
                     y='total_carga',
-                    labels={'mes_nome': 'Mês', 'total_carga': 'Carga Total (Kg)'}
+                    labels={'mes_nome': 'Mês', 'total_carga': 'Carga Total (Kg)'},
+                    title='Desempenho Mensal de Carga Aérea: Volume Transportado em kg'
                     )
+        fig.update_layout(
+            margin=dict(l=10, r=30, t=50, b=0),  # Margens para evitar cortes
+            title_x=0.15  # Centraliza o título
+        )
         st.plotly_chart(fig)
     
     with tab3:
@@ -149,8 +173,13 @@ with col1.container(border=True):
         fig = px.line(df_correio,
                     x='mes_nome',
                     y='total_correio',
-                    labels={'mes_nome': 'Mês', 'total_correio': 'Correio Total (Kg)'}
+                    labels={'mes_nome': 'Mês', 'total_correio': 'Correio Total (Kg)'},
+                    title='Volume de Correio Aéreo: Tendências Mensais em kg'
                     )
+        fig.update_layout(
+            margin=dict(l=10, r=30, t=50, b=0),  # Margens para evitar cortes
+            title_x=0.23  # Centraliza o título
+        )
         st.plotly_chart(fig)
 
     
@@ -165,7 +194,13 @@ with col2.container(border=True):
 
     fig = px.pie(df_natureza,
                  names='natureza',
-                 values='total_voos'
+                 values='total_voos',
+                 title='Distribuição de Voos: Domésticos vs. Internacionais'
+    )
+    fig.update_layout(
+    height=508,  # Altura do gráfico
+    margin=dict(l=10, r=30, t=50, b=0),  # Margens para evitar cortes
+    title_x=0.23  # Centraliza o título
     )
     st.plotly_chart(fig)
 
