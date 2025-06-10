@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import plotly.express as px
+from plotly import graph_objects as go  
 
 conn = sqlite3.connect('data/voos.db')
 
@@ -357,6 +358,62 @@ else:
 st.divider()
 st.header("🔁 Eficiência Operacional Comparada")
 
+@st.cache_data
+def carregar_consumo_combustivel():
+    query = """
+    SELECT 
+        empresa_nome,
+        SUM(combustivel_litros) AS total_consumo_litros
+    FROM voos
+    GROUP BY empresa_nome
+    """
+    return pd.read_sql_query(query, conn)
 
-# --- Fim da Seção ---
+# Load data
+df = carregar_dados()
+df_consumo = carregar_consumo_combustivel()
+df_eff = df.merge(df_consumo, on="empresa_nome", how="left")
+
+if df_eff.empty:
+    st.warning("Nenhum dado encontrado para análise de eficiência.")
+else:
+    # Calculate efficiency metrics
+    df_eff["litros_por_km"] = df_eff["total_consumo_litros"] / df_eff["total_distancia_km"]
+    df_eff["passageiros_por_decolagem"] = df_eff["total_passageiros"] / df_eff["total_decolagens"]
+    df_eff["distancia_por_decolagem"] = df_eff["total_distancia_km"] / df_eff["total_decolagens"]
+    
+    # Normalize metrics for radar chart (scale to 0-1)
+    df_eff["litros_por_km_norm"] = 1 - (df_eff["litros_por_km"] - df_eff["litros_por_km"].min()) / (df_eff["litros_por_km"].max() - df_eff["litros_por_km"].min())  # Invert: lower is better
+    df_eff["passageiros_por_decolagem_norm"] = (df_eff["passageiros_por_decolagem"] - df_eff["passageiros_por_decolagem"].min()) / (df_eff["passageiros_por_decolagem"].max() - df_eff["passageiros_por_decolagem"].min())
+    df_eff["distancia_por_decolagem_norm"] = (df_eff["distancia_por_decolagem"] - df_eff["distancia_por_decolagem"].min()) / (df_eff["distancia_por_decolagem"].max() - df_eff["distancia_por_decolagem"].min())
+    
+    # Limit to top 3 companies by fuel consumption
+    df_eff = df_eff.sort_values("total_consumo_litros", ascending=False).head(3)
+    
+    # Radar chart
+    fig_eff = go.Figure()
+    for _, row in df_eff.iterrows():
+        fig_eff.add_trace(go.Scatterpolar(
+            r=[row["litros_por_km_norm"], row["passageiros_por_decolagem_norm"], row["distancia_por_decolagem_norm"], row["litros_por_km_norm"]],
+            theta=["Litros por km", "Passageiros por Decolagem", "Distância por Decolagem (km)", "Litros por km"],
+            name=row["empresa_nome"],
+            fill="toself",
+            hovertemplate="<b>%{fullData.name}</b><br>Litros/km: %{customdata[0]:.2f}<br>Passageiros/Decolagem: %{customdata[1]:.1f}<br>Distância/Decolagem: %{customdata[2]:,.0f} km<extra></extra>",
+            customdata=[[row["litros_por_km"], row["passageiros_por_decolagem"], row["distancia_por_decolagem"]]],
+            line=dict(color=px.colors.qualitative.Plotly[_ % len(px.colors.qualitative.Plotly)])
+        ))
+    fig_eff.update_layout(
+        template="plotly_dark",     
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=10)),
+            angularaxis=dict(tickfont=dict(size=10))
+        ),
+        showlegend=True,  # Legend needed for multiple companies
+        height=400,
+        margin={"t": 100, "b": 50, "l": 50, "r": 50},
+        font=dict(size=10),
+        title="Eficiência Operacional Comparada (Top 3 Empresas)",
+    )
+    st.plotly_chart(fig_eff, use_container_width=True)
+
 conn.close()
