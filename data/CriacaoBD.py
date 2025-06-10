@@ -110,4 +110,3 @@ def criarTable():
     conn.close()
 
     print("Dados do CSV carregados e inseridos no banco de dados 'voos.db' com sucesso!")
-
