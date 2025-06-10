@@ -403,7 +403,6 @@ else:
             line=dict(color=px.colors.qualitative.Plotly[_ % len(px.colors.qualitative.Plotly)])
         ))
     fig_eff.update_layout(
-        template="plotly_dark",     
         polar=dict(
             radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=10)),
             angularaxis=dict(tickfont=dict(size=10))
