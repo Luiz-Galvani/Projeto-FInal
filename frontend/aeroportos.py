@@ -2,10 +2,9 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 
-st.markdown("<h1 style='text-align: center;'>🛫 Aeroportos 🛬</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🛫 ANÁLISE DE DEMANDA E COBERTURA 🛬</h1>", unsafe_allow_html=True)
 
 st.divider()
-
 conn = sqlite3.connect("data/voos.db")
 cursor = conn.cursor()
 
