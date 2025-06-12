@@ -227,32 +227,67 @@ cursor.execute('''
             origem_sigla != '' AND destino_sigla != '' AND origem_nome != '' AND destino_nome != ''
 ''')
 
-# Consulta para obter os nomes distintos de aeroportos
+# Criar dois seletores: origem e destino
+col1, col2 = st.columns(2)
+
+# Obter lista completa de aeroportos
 cursor.execute('''
     SELECT DISTINCT origem_nome FROM aeroportos
     UNION
     SELECT DISTINCT destino_nome FROM aeroportos
     ORDER BY origem_nome
 ''')
-
-
 nomes_aeroportos = [row[0] for row in cursor.fetchall()]
 
-# Selecionador de aeroporto pelo nome
-aeroporto_selecionado = st.selectbox('Selecione o aeroporto:', nomes_aeroportos)
+# Seletor de Origem
+with col1:
+    # Adicionar opção "Todos" no início
+    origens = ["Todos"] + nomes_aeroportos
+    origem_selecionada = st.selectbox('Selecione a Origem:', origens)
 
-# Consulta para obter TODAS as rotas associadas ao aeroporto selecionado
-cursor.execute('''
-    SELECT 
-        origem_sigla,
-        destino_sigla
-    FROM
-        aeroportos
-    WHERE
-        origem_nome = ? OR destino_nome = ?
-''', (aeroporto_selecionado, aeroporto_selecionado))
+# Seletor de Destino
+with col2:
+    destinos = ["Todos"]
+    
+    # Se uma origem foi selecionada, buscar destinos correspondentes
+    if origem_selecionada != "Todos":
+        cursor.execute('''
+            SELECT DISTINCT destino_nome 
+            FROM aeroportos 
+            WHERE origem_nome = ?
+            ORDER BY destino_nome
+        ''', (origem_selecionada,))
+        destinos += [row[0] for row in cursor.fetchall()]
+    
+    destino_selecionado = st.selectbox('Selecione o Destino:', destinos, 
+                                      disabled=(origem_selecionada == "Todos"))
 
-rotas_filtradas = cursor.fetchall()
+# Consulta para obter rotas de acordo com os filtros
+if origem_selecionada == "Todos":
+    # Mostrar todas as rotas
+    cursor.execute('''
+        SELECT origem_sigla, destino_sigla
+        FROM aeroportos
+    ''')
+    rotas_filtradas = cursor.fetchall()
+    
+elif destino_selecionado == "Todos":
+    # Mostrar todos os destinos da origem selecionada
+    cursor.execute('''
+        SELECT origem_sigla, destino_sigla
+        FROM aeroportos
+        WHERE origem_nome = ?
+    ''', (origem_selecionada,))
+    rotas_filtradas = cursor.fetchall()
+    
+else:
+    # Mostrar rota específica
+    cursor.execute('''
+        SELECT origem_sigla, destino_sigla
+        FROM aeroportos
+        WHERE origem_nome = ? AND destino_nome = ?
+    ''', (origem_selecionada, destino_selecionado))
+    rotas_filtradas = cursor.fetchall()
 
 # Converter para DataFrame
 df_rotas_filtradas = pd.DataFrame(rotas_filtradas, columns=['origem_sigla', 'destino_sigla'])
@@ -260,84 +295,60 @@ df_rotas_filtradas = pd.DataFrame(rotas_filtradas, columns=['origem_sigla', 'des
 # Preparar dados para o mapa
 fig = go.Figure()
 
-# Obter sigla do aeroporto selecionado
-sigla_origem = None
 if not df_rotas_filtradas.empty:
-    # Encontrar a sigla do aeroporto selecionado
-    origem_rows = df_rotas_filtradas[df_rotas_filtradas['origem_sigla'] != '']
-    if not origem_rows.empty:
-        sigla_origem = origem_rows.iloc[0]['origem_sigla']
-    else:
-        destino_rows = df_rotas_filtradas[df_rotas_filtradas['destino_sigla'] != '']
-        if not destino_rows.empty:
-            sigla_origem = destino_rows.iloc[0]['destino_sigla']
-
-# Se encontramos a sigla do aeroporto e ela está na base
-if sigla_origem and sigla_origem in airports:
-    origem_data = airports[sigla_origem]
+    # Listas para armazenar todas as coordenadas
+    all_lons = []
+    all_lats = []
     
-    # Adicionar aeroporto central (ponto vermelho)
-    fig.add_trace(go.Scattergeo(
-        lon = [origem_data['lon']],
-        lat = [origem_data['lat']],
-        text = [f"Aeroporto: {aeroporto_selecionado} ({sigla_origem})"],
-        marker = dict(size=15, color='red'),
-        name = aeroporto_selecionado,
-        mode = 'markers'
-    ))
-    
-    # Listas para cálculo de limites do mapa
-    all_lons = [origem_data['lon']]
-    all_lats = [origem_data['lat']]
-    
-    # Contador de rotas plotadas
-    rotas_plotadas = 0
-    
-    # Processar TODAS as rotas associadas
-    for index, rota in df_rotas_filtradas.iterrows():
-        # Determinar qual é o aeroporto de destino para esta rota
-        if rota['origem_sigla'] == sigla_origem:
-            sigla_destino = rota['destino_sigla']
-            tipo_rota = "Saída"
-            cor_linha = 'blue'
-        else:
-            sigla_destino = rota['origem_sigla']
-            tipo_rota = "Chegada"
-            cor_linha = 'green'
+    # Processar cada rota
+    for _, rota in df_rotas_filtradas.iterrows():
+        origem_sigla = rota['origem_sigla']
+        destino_sigla = rota['destino_sigla']
         
-        if sigla_destino in airports:
-            dest_data = airports[sigla_destino]
-            rotas_plotadas += 1
+        if origem_sigla in airports and destino_sigla in airports:
+            # Obter coordenadas
+            orig_coords = airports[origem_sigla]
+            dest_coords = airports[destino_sigla]
             
             # Adicionar coordenadas para cálculo de limites
-            all_lons.append(dest_data['lon'])
-            all_lats.append(dest_data['lat'])
+            all_lons += [orig_coords['lon'], dest_coords['lon']]
+            all_lats += [orig_coords['lat'], dest_coords['lat']]
             
             # Adicionar linha da rota
             fig.add_trace(go.Scattergeo(
-                lon = [origem_data['lon'], dest_data['lon']],
-                lat = [origem_data['lat'], dest_data['lat']],
-                text = f"{tipo_rota}: {sigla_origem} ↔ {sigla_destino}",
-                line = dict(width=1, color=cor_linha),
+                lon = [orig_coords['lon'], dest_coords['lon']],
+                lat = [orig_coords['lat'], dest_coords['lat']],
+                text = f"{origem_sigla} → {destino_sigla}",
+                line = dict(width=1, color='blue'),
                 mode = 'lines',
                 showlegend = False
             ))
             
-            # Adicionar ponto do aeroporto conectado
+            # Adicionar ponto de origem (verde)
             fig.add_trace(go.Scattergeo(
-                lon = [dest_data['lon']],
-                lat = [dest_data['lat']],
-                text = f"Aeroporto: {sigla_destino}",
-                marker = dict(size=8, color='orange'),
+                lon = [orig_coords['lon']],
+                lat = [orig_coords['lat']],
+                text = f"Origem: {origem_sigla}",
+                marker = dict(size=10, color='green'),
+                mode = 'markers',
+                showlegend = False
+            ))
+            
+            # Adicionar ponto de destino (vermelho)
+            fig.add_trace(go.Scattergeo(
+                lon = [dest_coords['lon']],
+                lat = [dest_coords['lat']],
+                text = f"Destino: {destino_sigla}",
+                marker = dict(size=10, color='red'),
                 mode = 'markers',
                 showlegend = False
             ))
     
-    # Configurar layout do mapa apenas se houver rotas plotadas
-    if rotas_plotadas > 0:
+    # Configurar layout do mapa
+    if all_lons and all_lats:
         fig.update_layout(
-            title_text = f'Conexões de {aeroporto_selecionado} ({rotas_plotadas} rotas)',
-            showlegend = True,
+            title_text = f'Rotas Aéreas: {len(rotas_filtradas)} conexões',
+            showlegend = False,
             geo = dict(
                 scope = 'world',
                 projection_type = 'equirectangular',
@@ -351,50 +362,36 @@ if sigla_origem and sigla_origem in airports:
             margin = {"r":0,"t":40,"l":0,"b":0}
         )
         
-        # Calcular limites do mapa
-        min_lon, max_lon = min(all_lons), max(all_lons)
-        min_lat, max_lat = min(all_lats), max(all_lats)
-        
-        # Ajustar o zoom com uma margem
+        # Ajustar zoom com margem
         fig.update_geos(
-            lataxis_range = [min_lat - 5, max_lat + 5],
-            lonaxis_range = [min_lon - 10, max_lon + 10]
+            lataxis_range = [min(all_lats) - 5, max(all_lats) + 5],
+            lonaxis_range = [min(all_lons) - 10, max(all_lons) + 10]
         )
     else:
-        st.warning("Nenhuma rota válida encontrada para este aeroporto.")
+        st.warning("Nenhuma rota válida encontrada com os filtros selecionados.")
 else:
-    st.error(f"Dados do aeroporto {aeroporto_selecionado} (sigla: {sigla_origem}) não encontrados!")
+    if origem_selecionada != "Todos":
+        st.warning("Nenhuma rota encontrada com os filtros selecionados.")
+    else:
+        st.info("Selecione uma origem para visualizar as rotas aéreas")
 
 # Mostrar o gráfico
 st.plotly_chart(fig)
 
-# Mostrar tabela com todas as rotas
-with st.expander("Ver detalhes das conexões"):
-    # Adicionar coluna de tipo de rota
-    df_exibir = df_rotas_filtradas.copy()
-    df_exibir['tipo'] = df_exibir.apply(
-        lambda row: "Saída" if row['origem_sigla'] == sigla_origem else "Chegada",
-        axis=1
-    )
-    df_exibir['aeroporto_conectado'] = df_exibir.apply(
-        lambda row: row['destino_sigla'] if row['tipo'] == "Saída" else row['origem_sigla'],
-        axis=1
-    )
-    
-    st.dataframe(df_exibir[['tipo', 'aeroporto_conectado']].reset_index(drop=True))
-    
-    # Mostrar informações sobre o aeroporto selecionado
-    st.subheader(f"Informações sobre {aeroporto_selecionado}")
-    st.write(f"**Sigla:** {sigla_origem}")
-    
-    # Verificar se a sigla está na base de aeroportos
-    if sigla_origem and sigla_origem in airports:
-        info = airports[sigla_origem]
-        st.write(f"**Nome completo:** {info.get('name', 'N/A')}")
-        st.write(f"**Cidade:** {info.get('city', 'N/A')}")
-        st.write(f"**País:** {info.get('country', 'N/A')}")
-        st.write(f"**Coordenadas:** {info['lat']}, {info['lon']}")
-    else:
-        st.warning("Informações adicionais não disponíveis")
-
+# Mostrar tabela com rotas filtradas
+if not df_rotas_filtradas.empty:
+    with st.expander("Ver detalhes das rotas"):
+        # Adicionar nomes completos
+        df_exibir = df_rotas_filtradas.copy()
+        
+        # Obter nomes dos aeroportos
+        nomes_dict = {}
+        cursor.execute("SELECT origem_sigla, origem_nome FROM aeroportos")
+        for sigla, nome in cursor.fetchall():
+            nomes_dict[sigla] = nome
+        
+        df_exibir['origem_nome'] = df_exibir['origem_sigla'].map(nomes_dict)
+        df_exibir['destino_nome'] = df_exibir['destino_sigla'].map(nomes_dict)
+        
+        st.dataframe(df_exibir[['origem_sigla', 'origem_nome', 'destino_sigla', 'destino_nome']])
 conn.close()
