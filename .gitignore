@@ -1,3 +1,4 @@
-utils/__pycache__
 frontend/__pycache__
 data/__pycache__
+voos.db
+data/voos.db
