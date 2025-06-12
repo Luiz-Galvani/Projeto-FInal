@@ -54,17 +54,17 @@ st.divider()
 r1, r2, r3 = carregar_metricas()
 
 c1, c2, c3 = st.columns(3)
-c1.metric(
+c1.container(border=True).metric(
         "✈️ Mais Passageiros",
         f"{int(r1.total_passageiros):,}".replace(",", "."),
         r1.empresa_nome
     )
-c2.metric(
+c2.container(border=True).metric(
         "🛫 Mais Decolagens",
         f"{int(r2.total_decolagens):,}".replace(",", "."),
         r2.empresa_nome
     )
-c3.metric(
+c3.container(border=True).metric(
         "⏱️ Mais Horas Voadas",
         f"{int(r3.total_horas_voadas):,}".replace(",", "."),
         r3.empresa_nome
@@ -102,7 +102,7 @@ with tab1:
             yaxis={"tickfont": {"size": 10}},
             height=400
         )
-        st.plotly_chart(fig_passageiros, use_container_width=True)
+        st.container(border=True).plotly_chart(fig_passageiros, use_container_width=True)
 
 with tab2:
     df = carregar_dados()
@@ -126,7 +126,7 @@ with tab2:
             yaxis={"tickfont": {"size": 10}},
             height=400
         )
-        st.plotly_chart(fig_carga, use_container_width=True)
+        st.container(border=True).plotly_chart(fig_carga, use_container_width=True)
 
 with tabs3:
     df = carregar_dados()
@@ -150,7 +150,7 @@ with tabs3:
             yaxis={"tickfont": {"size": 10}},
             height=400
         )
-        st.plotly_chart(fig_distancia, use_container_width=True)
+        st.container(border=True).plotly_chart(fig_distancia, use_container_width=True)
 
 st.divider()
 
@@ -216,14 +216,14 @@ with tabs[0]:
             orientation='h',
             labels={'empresa_nome': 'Empresa', 'total_horas_voadas': 'Horas Voadas'},
             title="Ranking: Horas Voadas",
-            color_discrete_sequence=px.colors.qualitative.Plotly
+            color_discrete_sequence=['#1f77b4']
         )
         fig_rank.update_layout(
             yaxis={'categoryorder': 'total ascending', 'tickfont': {'size': 10}},
             showlegend=False,
             height=400
         )
-        st.plotly_chart(fig_rank, use_container_width=True)
+        st.container(border=True).plotly_chart(fig_rank, use_container_width=True)
 
         st.dataframe(top5, use_container_width=True, height=220)
 
@@ -257,12 +257,11 @@ with tabs[1]:
             xaxis=dict(dtick="M1", tickformat="%b/%Y"),
             yaxis_tickformat=".0f"
         )
-        st.plotly_chart(fig_time, use_container_width=True)
+        st.container(border=True).plotly_chart(fig_time, use_container_width=True)
 
 st.divider()
 st.header("🚀 Decolagens vs Distância Voada")
 
-# 1) Puxa os totais por empresa
 df = carregar_dados()
 
 if df.empty:
@@ -291,7 +290,7 @@ else:
         margin=dict(l=40, r=20, t=20, b=40)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.container(border=True).plotly_chart(fig, use_container_width=True)
 
 st.divider()
 st.header("⛽ Consumo de Combustível por Empresa")
@@ -313,18 +312,15 @@ df_consumo = carregar_consumo_combustivel()
 if df_consumo.empty:
     st.warning("Nenhum dado de consumo de combustível encontrado.")
 else:
-    # Merge with carregar_dados for additional metrics
-    df = carregar_dados()  # Assumed to include total_distancia_km, total_decolagens
+    df = carregar_dados()  
     df_consumo = df_consumo.merge(
         df[["empresa_nome", "total_distancia_km", "total_decolagens"]], 
         on="empresa_nome", 
         how="left"
     )
     
-    # Calculate fuel efficiency (liters per km)
     df_consumo["litros_por_km"] = df_consumo["total_consumo_litros"] / df_consumo["total_distancia_km"]
     
-    # Bubble scatter plot
     fig_consumo = px.scatter(
         df_consumo,
         x="total_consumo_litros",
@@ -353,7 +349,7 @@ else:
         margin={"t": 100, "b": 50, "l": 50, "r": 50},
         hovermode="closest"
     )
-    st.plotly_chart(fig_consumo, use_container_width=True)
+    st.container(border=True).plotly_chart(fig_consumo, use_container_width=True)
 
 st.divider()
 st.header("🔁 Eficiência Operacional Comparada")
@@ -369,7 +365,6 @@ def carregar_consumo_combustivel():
     """
     return pd.read_sql_query(query, conn)
 
-# Load data
 df = carregar_dados()
 df_consumo = carregar_consumo_combustivel()
 df_eff = df.merge(df_consumo, on="empresa_nome", how="left")
@@ -377,20 +372,16 @@ df_eff = df.merge(df_consumo, on="empresa_nome", how="left")
 if df_eff.empty:
     st.warning("Nenhum dado encontrado para análise de eficiência.")
 else:
-    # Calculate efficiency metrics
     df_eff["litros_por_km"] = df_eff["total_consumo_litros"] / df_eff["total_distancia_km"]
     df_eff["passageiros_por_decolagem"] = df_eff["total_passageiros"] / df_eff["total_decolagens"]
     df_eff["distancia_por_decolagem"] = df_eff["total_distancia_km"] / df_eff["total_decolagens"]
     
-    # Normalize metrics for radar chart (scale to 0-1)
     df_eff["litros_por_km_norm"] = 1 - (df_eff["litros_por_km"] - df_eff["litros_por_km"].min()) / (df_eff["litros_por_km"].max() - df_eff["litros_por_km"].min())  # Invert: lower is better
     df_eff["passageiros_por_decolagem_norm"] = (df_eff["passageiros_por_decolagem"] - df_eff["passageiros_por_decolagem"].min()) / (df_eff["passageiros_por_decolagem"].max() - df_eff["passageiros_por_decolagem"].min())
     df_eff["distancia_por_decolagem_norm"] = (df_eff["distancia_por_decolagem"] - df_eff["distancia_por_decolagem"].min()) / (df_eff["distancia_por_decolagem"].max() - df_eff["distancia_por_decolagem"].min())
     
-    # Limit to top 3 companies by fuel consumption
     df_eff = df_eff.sort_values("total_consumo_litros", ascending=False).head(3)
     
-    # Radar chart
     fig_eff = go.Figure()
     for _, row in df_eff.iterrows():
         fig_eff.add_trace(go.Scatterpolar(
@@ -407,12 +398,12 @@ else:
             radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=10)),
             angularaxis=dict(tickfont=dict(size=10))
         ),
-        showlegend=True,  # Legend needed for multiple companies
+        showlegend=True,
         height=400,
         margin={"t": 100, "b": 50, "l": 50, "r": 50},
         font=dict(size=10),
         title="Eficiência Operacional Comparada (Top 3 Empresas)",
     )
-    st.plotly_chart(fig_eff, use_container_width=True)
+    st.container(border=True).plotly_chart(fig_eff, use_container_width=True)
 
 conn.close()
