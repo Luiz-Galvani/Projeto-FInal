@@ -245,11 +245,11 @@ with tab_Continente:
 
             col_cont1, col_cont2, col_cont3 = st.columns(3)
             with col_cont1.container(border = True):
-                st.markdown(f"<h4 style='text-align: center;'>Passageiros:<br> {total_pass_continente:,.0f} </h4>", unsafe_allow_html=True)
+                st.markdown(kpi_box("Passageiros",f"{total_pass_continente:,.0f}" ), unsafe_allow_html=True)
             with col_cont2.container(border = True):
-                st.markdown(f"<h4 style='text-align: center;'>Decolagens:<br> {total_decolagens_continente:,.0f} </h4>", unsafe_allow_html=True)
+                st.markdown(kpi_box("Decolagens",f"{total_decolagens_continente:,.0f}" ), unsafe_allow_html=True)
             with col_cont3.container(border = True):
-                st.markdown(f"<h4 style='text-align: center;'>Média Ocupação:<br> {media_ocupacao_continente:.2f}% </h4>", unsafe_allow_html=True)
+                st.markdown(kpi_box("Média Ocupação",f"{media_ocupacao_continente:.2f}%" ), unsafe_allow_html=True)
         else:
 
             st.info(f"Nenhum dado de voo encontrado para o continente selecionado.")
@@ -333,11 +333,11 @@ with tab_Estado:
 
             col_pais1, col_pais2, col_pais3 = st.columns(3)
             with col_pais1.container(border = True):
-                st.markdown(f"<h4 style='text-align: center;'>Passageiros:<br> {total_pass_pais:,.0f} </h4>", unsafe_allow_html=True)
+                st.markdown(kpi_box("Passageiros",f"{total_pass_pais:,.0f}" ), unsafe_allow_html=True)
             with col_pais2.container(border = True):
-                st.markdown(f"<h4 style='text-align: center;'>Decolagens:<br> {total_decolagens_pais:,.0f} </h4>", unsafe_allow_html=True)
+                st.markdown(kpi_box("Decolagens",f"{total_decolagens_pais:,.0f}" ), unsafe_allow_html=True)
             with col_pais3.container(border = True):
-                st.markdown(f"<h4 style='text-align: center;'>Média Ocupação:<br> {media_ocupacao_pais:.2f}% </h4>", unsafe_allow_html=True)
+                st.markdown(kpi_box("Média Ocupação",f"{media_ocupacao_pais:.2f}%" ), unsafe_allow_html=True)
         else:
             st.info(f"Nenhum dado de voo encontrado para {pais_selecionado}.")
             st.subheader(f"Total de Decolagens por Mês - {continente_selecionado}")
