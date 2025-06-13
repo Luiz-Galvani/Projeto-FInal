@@ -49,16 +49,6 @@ total_empresas = df['empresa_nome'].nunique()
 c1, c2, c3 = st.columns(3)
 
 # Segunda linha de métricas
-c1.metric('Litros consumidos por KM', kmcomb, border=True)
-c2.metric('Eficiência por Passageiro (Passageiros/Litro)', passcomb, border=True)
-c3.metric('Consumo Médio de Combustível', mediacombustivel, border=True)
-# Exibe as métricas nas colunas com o novo estilo (sem ícones do Font Awesome)
-# Primeira linha de métricas
-c1.container(border=True).metric('Total de Empresas', int(total_empresas))
-c2.container(border=True).metric( 'Passageiros Transportados', int(passtotal))
-c3.container(border=True).metric( 'Total de Voos', int(qtdvoos))
-
-# Segunda linha de métricas
 c1.container(border=True).metric('Litros consumidos por KM', kmcomb)
 c2.container(border=True).metric('Eficiência por Passageiro (Passageiros/Litro)', passcomb)
 c3.container(border=True).metric( 'Consumo Médio de Combustível', mediacombustivel)
