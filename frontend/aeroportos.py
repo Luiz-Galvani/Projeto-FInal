@@ -14,6 +14,20 @@ conn = sqlite3.connect(DATABASE_PATH)
 conn.row_factory = sqlite3.Row 
 cursor = conn.cursor()
 
+def kpi_box(title, value):
+    return f"""
+    <div style="
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        margin-bottom: 10px;
+    ">
+        <div style="font-size: 18px; font-weight: 500; color: #333;">{title}</div>
+        <p style='font-size: 24px; margin: 5px 0 0 0; font-weight: bold;'>{value}</p>
+    </div>
+    """
+
 totalAeroportos_query = """
     SELECT COUNT(DISTINCT sigla) AS Total_Aeroportos
     FROM (
@@ -37,11 +51,11 @@ if overview_kpis_row:
     col1, col2, col3 = st.columns(3) 
     
     with col1.container(border = True):
-        st.markdown(f"<h3 style='text-align: center;'>Total de Aeroportos<br> {total['Total_Aeroportos']:,.0f} </h3>", unsafe_allow_html=True)
+        st.markdown(kpi_box("Total de Aeroportos",f"{total['Total_Aeroportos']:,.0f}"), unsafe_allow_html=True)
     with col2.container(border = True):
-        st.markdown(f"<h3 style='text-align: center;'>Total de Decolagens<br> {overview_kpis_row['Total_Decolagens']:,.0f} </h3>", unsafe_allow_html=True)
+        st.markdown(kpi_box("Total de Decolagens",f"{overview_kpis_row['Total_Decolagens']:,.0f}"), unsafe_allow_html=True)
     with col3.container(border = True):
-        st.markdown(f"<h3 style='text-align: center;'>Total de Passageiros<br> {overview_kpis_row['Total_Passageiros']:,.0f} </h3>", unsafe_allow_html=True)
+        st.markdown(kpi_box("Total de Passageiros",f"{overview_kpis_row['Total_Passageiros']:,.0f}"), unsafe_allow_html=True)
         
 else:
     st.warning("Não foi possível carregar os KPIs da visão geral.")

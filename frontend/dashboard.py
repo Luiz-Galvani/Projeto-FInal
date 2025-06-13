@@ -15,6 +15,19 @@ st.subheader('', divider=True)
 conn = sqlite3.connect("data/voos.db")
 cursor = conn.cursor()
 
+def kpi_box(title, value):
+    return f"""
+    <div style="
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        margin-bottom: 10px;
+    ">
+        <div style="font-size: 18px; font-weight: 500; color: #333;">{title}</div>
+        <p style='font-size: 24px; margin: 5px 0 0 0; font-weight: bold;'>{value}</p>
+    </div>
+    """
 ## Big Numbers
 col1, col2, col3, col4 = st.columns(4)
 
@@ -23,28 +36,28 @@ cursor.execute('SELECT SUM(passageiros_pagos + passageiros_gratis) FROM voos')
 total_passageiros = cursor.fetchone()[0]
 
 with col1.container(border=True):
-    st.markdown(f"<h4 style='text-align: center;'> Total de Passageiros <br> {total_passageiros} </h4>", unsafe_allow_html=True)
+    st.markdown(kpi_box("Total de Passageiros",f"{total_passageiros:,.0f}"), unsafe_allow_html=True)
 
 # Total de Carga (Kg)
 cursor.execute('SELECT SUM(carga_paga_kg + carga_gratis_kg) FROM voos')
 carga_total = cursor.fetchone()[0]
 
 with col2.container(border=True):
-    st.markdown(f"<h4 style='text-align: center;'> Carga Total <br> {carga_total} Kg</h4>", unsafe_allow_html=True)
+    st.markdown(kpi_box("Carga Total",f"{carga_total:,.2f} Kg" ), unsafe_allow_html=True)
 
 # Total de Correio
 cursor.execute('SELECT SUM(correio_kg) FROM voos')
 correio_total = cursor.fetchone()[0]
 
 with col3.container(border=True):
-    st.markdown(f"<h4 style='text-align: center;'> Total de Correios <br> {correio_total} Kg</h4>", unsafe_allow_html=True)
+    st.markdown(kpi_box("Total de Correios",f"{correio_total:,.2f} Kg" ), unsafe_allow_html=True)
 
 # Total de Voos (Decolagens)
 cursor.execute('SELECT SUM(decolagens) FROM voos')
 total_decolagens = cursor.fetchone()[0]
 
 with col4.container(border=True):
-    st.markdown(f"<h4 style='text-align: center;'> Total de Decolagens <br> {int(total_decolagens)}</h4>", unsafe_allow_html=True)
+    st.markdown(kpi_box("Total de Decolagens",f"{int(total_decolagens):,.0f}" ), unsafe_allow_html=True)
 
 # Total de Distância Percorrida
 cursor.execute('SELECT SUM(distancia_voada_km) FROM voos')
@@ -57,14 +70,14 @@ cursor.execute("SELECT SUM(rpk) / SUM(ask) AS taxa_ocupacao FROM voos")
 taxa_ocupacao = cursor.fetchone()[0]
 
 with col1.container(border=True):
-    st.markdown(f"<h4 style='text-align: center;'> Média de Ocupação (RPK / ASK) <br> {taxa_ocupacao:.2%}</h4>", unsafe_allow_html=True)
+    st.markdown(kpi_box("Média de Ocupação (RPK / ASK)",f"{taxa_ocupacao:.2%}" ), unsafe_allow_html=True)
 
 # Consumo Total de Combustível
 cursor.execute('SELECT SUM(combustivel_litros) FROM voos')
 combustivel_total = cursor.fetchone()[0]
 
 with col2.container(border=True):
-    st.markdown(f"<h4 style='text-align: center;'> Consumo Total de Combustível <br> {combustivel_total}</h4>", unsafe_allow_html=True)
+    st.markdown(kpi_box("Consumo Total de Combustível",f"{combustivel_total:,.2f}" ), unsafe_allow_html=True)
 
 ## Evolução Temporal (Gráfico de Linhas)
 # Passageiros pagantes e gratuitos

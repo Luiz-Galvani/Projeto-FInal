@@ -70,9 +70,8 @@ c3.container(border=True).metric(
         r3.empresa_nome
     )
 
-st.divider()
-
-st.header("📊 Top 10 Empresas")
+st.subheader("",divider = True)
+st.markdown(f"<h2 style='text-align: center;'>📊 Top 10 Empresas </h2>", unsafe_allow_html=True)
 
 tab1, tab2, tabs3= st.tabs([
     "🧑‍🤝‍🧑 Top 10 Passageiros",
@@ -100,7 +99,8 @@ with tab1:
         fig_passageiros.update_layout(
             showlegend=False,
             yaxis={"tickfont": {"size": 10}},
-            height=400
+            height=400,
+            title_x = 0.4
         )
         st.container(border=True).plotly_chart(fig_passageiros, use_container_width=True)
 
@@ -124,7 +124,8 @@ with tab2:
         fig_carga.update_layout(
             showlegend=False,
             yaxis={"tickfont": {"size": 10}},
-            height=400
+            height=400,
+            title_x = 0.4
         )
         st.container(border=True).plotly_chart(fig_carga, use_container_width=True)
 
@@ -148,11 +149,12 @@ with tabs3:
         fig_distancia.update_layout(
             showlegend=False,
             yaxis={"tickfont": {"size": 10}},
-            height=400
+            height=400,
+            title_x = 0.4
         )
         st.container(border=True).plotly_chart(fig_distancia, use_container_width=True)
 
-st.divider()
+st.subheader("",divider = True)
 
 @st.cache_data
 def load_ranking_horas(top_n: int = 5):
@@ -196,15 +198,14 @@ def load_empresas() -> list[str]:
     df = pd.read_sql_query("SELECT DISTINCT empresa_nome FROM voos ORDER BY empresa_nome", conn)
     return df['empresa_nome'].tolist()
 
-st.header("⏱️ Horas Voadas por Empresa")
-
+st.markdown(f"<h2 style='text-align: center;'>⏱️ Horas Voadas por Empresa </h2>", unsafe_allow_html=True)
 tabs = st.tabs([
     "🏆 Ranking Top-5",
     "📈 Evolução Mensal",
 ])
 
 with tabs[0]:
-    st.subheader("Top-5 Empresas por Horas Voadas")
+    st.markdown(f"<h3 style='text-align: center;'>Top-5 Empresas por Horas Voadas</h3>", unsafe_allow_html=True)
     top5 = load_ranking_horas(5)
     if top5.empty:
         st.warning("Nenhum dado encontrado para as empresas.")
@@ -215,7 +216,6 @@ with tabs[0]:
             y='empresa_nome',
             orientation='h',
             labels={'empresa_nome': 'Empresa', 'total_horas_voadas': 'Horas Voadas'},
-            title="Ranking: Horas Voadas",
             color_discrete_sequence=['#1f77b4']
         )
         fig_rank.update_layout(
@@ -228,7 +228,7 @@ with tabs[0]:
         st.dataframe(top5, use_container_width=True, height=220)
 
 with tabs[1]:
-    st.subheader("📈 Evolução Mensal de Horas Voadas")
+    st.markdown(f"<h3 style='text-align: center;'>📈 Evolução Mensal de Horas Voadas</h3>", unsafe_allow_html=True)
 
     empresa_selecionada = st.selectbox(
         "Selecione a Empresa",
@@ -255,12 +255,13 @@ with tabs[1]:
         )
         fig_time.update_layout(
             xaxis=dict(dtick="M1", tickformat="%b/%Y"),
-            yaxis_tickformat=".0f"
+            yaxis_tickformat=".0f",
+            title_x = 0.35
         )
         st.container(border=True).plotly_chart(fig_time, use_container_width=True)
 
-st.divider()
-st.header("🚀 Decolagens vs Distância Voada")
+st.subheader("", divider = True)
+st.markdown(f"<h2 style='text-align: center;'>🚀 Decolagens vs Distância Voada</h2>", unsafe_allow_html=True)
 
 df = carregar_dados()
 
@@ -292,8 +293,9 @@ else:
 
     st.container(border=True).plotly_chart(fig, use_container_width=True)
 
-st.divider()
-st.header("⛽ Consumo de Combustível por Empresa")
+st.subheader("", divider = True)
+st.markdown(f"<h2 style='text-align: center;'>⛽ Consumo de Combustível por Empresa</h2>", unsafe_allow_html=True)
+
 
 @st.cache_data
 def carregar_consumo_combustivel():
@@ -347,12 +349,13 @@ else:
         xaxis={"title": "Consumo Total (litros)", "tickformat": ",.0f"},
         yaxis={"title": "Litros por km", "tickfont": {"size": 10}},
         margin={"t": 100, "b": 50, "l": 50, "r": 50},
-        hovermode="closest"
+        hovermode="closest",
+        title_x = 0.35
     )
     st.container(border=True).plotly_chart(fig_consumo, use_container_width=True)
 
-st.divider()
-st.header("🔁 Eficiência Operacional Comparada")
+st.subheader("", divider = True)
+st.markdown(f"<h2 style='text-align: center;'>🔁 Eficiência Operacional Comparada</h2>", unsafe_allow_html=True)
 
 @st.cache_data
 def carregar_consumo_combustivel():
@@ -397,12 +400,15 @@ else:
         polar=dict(
             radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=10)),
             angularaxis=dict(tickfont=dict(size=10))
+            
         ),
+
         showlegend=True,
         height=400,
         margin={"t": 100, "b": 50, "l": 50, "r": 50},
         font=dict(size=10),
         title="Eficiência Operacional Comparada (Top 3 Empresas)",
+        title_x = 0.35
     )
     st.container(border=True).plotly_chart(fig_eff, use_container_width=True)
 

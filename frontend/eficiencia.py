@@ -49,13 +49,32 @@ total_empresas = df['empresa_nome'].nunique()
 c1, c2, c3 = st.columns(3)
 
 # Segunda linha de métricas
-c1.container(border=True).metric('Litros consumidos por KM', kmcomb)
-c2.container(border=True).metric('Eficiência por Passageiro (Passageiros/Litro)', passcomb)
-c3.container(border=True).metric( 'Consumo Médio de Combustível', mediacombustivel)
+def kpi_box(title, value):
+    return f"""
+    <div style="
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        margin-bottom: 10px;
+    ">
+        <div style="font-size: 18px; font-weight: 500; color: #333;">{title}</div>
+        <p style='font-size: 24px; margin: 5px 0 0 0; font-weight: bold;'>{value}</p>
+    </div>
+    """
+with c1.container(border = True):
+    st.markdown(kpi_box('Litros consumidos por KM', kmcomb), unsafe_allow_html=True)
 
+with c2.container(border = True):
+    st.markdown(kpi_box('Eficiência por Passageiro (Passageiros/Litro)', passcomb), unsafe_allow_html=True)
 
+with c3.container(border = True):
+    st.markdown(kpi_box('Consumo Médio de Combustível', mediacombustivel), unsafe_allow_html=True)
+
+st.subheader("", divider = True)
 # Análise de Consumo de Combustível por Empresa ou Região
-st.title("Variação Mensal da Eficiência")
+st.markdown("<h2 style='text-align: center;'>Variação Mensal da Eficiência</h2>", unsafe_allow_html=True)
+
 
 # Cria uma coluna 'ano_mes' para agrupar por ano e mês
 df['ano_mes'] = df['ano'].astype(str) + '-' + df['mes'].astype(str).str.zfill(2)
@@ -78,8 +97,8 @@ eficiencia_mensal = eficiencia_mensal.replace([float('inf'), -float('inf')], 0)
 # Cria as colunas para os gráficos de variação mensal
 col_litros_km, col_passageiros_litro = st.columns(2)
 
-with col_litros_km:
-    st.subheader("Litros por KM ao longo dos Meses")
+with col_litros_km.container(border = True):
+    st.markdown("<h3 style='text-align: center;'>Litros por KM ao longo dos Meses</h3>", unsafe_allow_html=True)
     fig = px.line(
         eficiencia_mensal,
         x='ano_mes',
@@ -90,8 +109,8 @@ with col_litros_km:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-with col_passageiros_litro:
-    st.subheader("Passageiros por Litro ao longo dos Meses")
+with col_passageiros_litro.container(border = True):
+    st.markdown("<h3 style='text-align: center;'>Passageiros por Litro ao longo dos Meses</h3>", unsafe_allow_html=True)
     fig = px.line(
         eficiencia_mensal,
         x='ano_mes',
@@ -103,9 +122,8 @@ with col_passageiros_litro:
     st.plotly_chart(fig, use_container_width=True)
 st.write("Tabela de Variação Mensal da Eficiência:")
 st.dataframe(eficiencia_mensal.round(2), use_container_width=True)
-st.divider()
-st.subheader("Consumo Médio de Combustível")
-
+st.subheader("", divider = True)
+st.markdown("<h2 style='text-align: center;'>Consumo Médio de Combustível</h2>", unsafe_allow_html=True)
 tab_empresa, tab_continente_pais = st.tabs(["Empresa","País/Continente"])
 
 with tab_empresa:
@@ -135,8 +153,8 @@ with tab_empresa:
 
     # Benchmark: Gráficos de barras para eficiência entre empresas
     # Top 10 empresas por Litros por KM (menor é melhor) - USANDO tabela_empresas_total (dados globais)
-    with col1:
-        st.write("#### Top 10 Empresas - Mais Eficientes (Litros por KM)")
+    with col1.container(border = True):
+        st.markdown("<h4 style='text-align: center;'> Top 10 Empresas - Mais Eficientes (Litros por KM)</h4>", unsafe_allow_html=True)
         eficiencia_km = tabela_empresas_total[tabela_empresas_total['Combustível Total (L)'] > 0].sort_values(by="Litros por KM (Empresa)", ascending=True).head(10)
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         sns.barplot(x="Litros por KM (Empresa)", y="Empresa", data=eficiencia_km, palette="viridis", ax=ax1)
@@ -145,8 +163,8 @@ with tab_empresa:
         st.pyplot(fig1)
 
     # Top 10 empresas por Passageiros por Litro (maior é melhor) - USANDO tabela_empresas_total (dados globais)
-    with col2:
-        st.write("#### Top 10 Empresas - Mais Eficientes (Passageiros por Litro)")
+    with col2.container(border = True):
+        st.markdown("<h4 style='text-align: center;'>Top 10 Empresas - Mais Eficientes (Passageiros por Litro)</h4>", unsafe_allow_html=True)
         eficiencia_passageiro = tabela_empresas_total.sort_values(by="Passageiros por Litro (Empresa)", ascending=False).head(10)
         fig2, ax2 = plt.subplots(figsize=(10, 6))
         sns.barplot(x="Passageiros por Litro (Empresa)", y="Empresa", data=eficiencia_passageiro, palette="magma", ax=ax2)
@@ -154,6 +172,8 @@ with tab_empresa:
         ax2.set_ylabel("Empresa")
         st.pyplot(fig2)
 
+    st.subheader("",divider = True)
+    st.markdown("<h2 style='text-align: center;'>📊 Consumo Médio de Combustível e Eficiência por Empresa</h2>", unsafe_allow_html=True)
     # Input para pesquisar empresas
     empresa_pesquisa = st.text_input(
         "🔍 Pesquisar empresa (digite a sigla ou parte do nome):",
@@ -168,9 +188,8 @@ with tab_empresa:
         ]
     else:
         df_filtrado_para_tabela = df  # Se não houver pesquisa, mostra todas as empresas
-
     # Tabela de consumo médio por empresa (calculada com df_filtrado_para_tabela)
-    st.subheader("📊 Consumo Médio de Combustível e Eficiência por Empresa")
+    
     tabela_empresas = df_filtrado_para_tabela.groupby(["empresa_sigla", "empresa_nome"]).agg(
         combustivel_litros_total=('combustivel_litros', 'sum'),
         passageiros_pagos_total=('passageiros_pagos', 'sum'),
@@ -239,12 +258,12 @@ with tab_empresa:
 
 with tab_continente_pais:
     # Se a análise for por País/Continente
-    st.write("### Consumo Médio por País (Litros por Voo)")
+    st.markdown("<h3 style='text-align: center;'>Consumo Médio por País (Litros por Voo)</h3>", unsafe_allow_html=True)
     col_pais_chart, col_pais_table = st.columns(2)
     # Consumo médio por país (origem)
     consumo_pais = df.groupby('origem_pais')['combustivel_litros'].mean().round(2).sort_values(ascending=False)
 
-    with col_pais_chart:
+    with col_pais_chart.container(border = True):
         fig_pais, ax_pais = plt.subplots(figsize=(10, 6))
         # Eixos invertidos para gráfico vertical, nova paleta para países
         sns.barplot(x=consumo_pais.head(10).index, y=consumo_pais.head(10).values, palette="viridis", ax=ax_pais)
@@ -255,12 +274,13 @@ with tab_continente_pais:
     with col_pais_table:
         st.dataframe(consumo_pais.reset_index().rename(columns={"combustivel_litros": "Consumo Médio (L)"}), use_container_width=True)
 
-    st.write("### Consumo Médio por Continente (Litros por Voo)")
+    st.subheader("", divider = True)
+    st.markdown("<h3 style='text-align: center;'>Consumo Médio por Continente (Litros por Voo)</h3>", unsafe_allow_html=True)
     col_cont_chart, col_cont_table = st.columns(2)
     # Consumo médio por continente (origem)
     consumo_continente = df.groupby('origem_continente')['combustivel_litros'].mean().round(2).sort_values(ascending=False)
 
-    with col_cont_chart:
+    with col_cont_chart.container(border = True):
         fig_cont, ax_cont = plt.subplots(figsize=(10, 6))
         # Eixos invertidos para gráfico vertical, nova paleta para continentes
         sns.barplot(x=consumo_continente.index, y=consumo_continente.values, palette="viridis", ax=ax_cont)
