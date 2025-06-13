@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.markdown("<h1 style='text-align: center;'>🛫 ANÁLISE DE DEMANDA E COBERTURA 🛬</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🛫 Análise de Demanda e Cobertura 🛬</h1>", unsafe_allow_html=True)
 
 st.subheader("", divider = True)
 

@@ -48,7 +48,7 @@ def carregar_metricas():
     
     return r1, r2, r3
 
-st.markdown("<h1 style='text-align: center;'>Benchmark entre Empresas Aéreas</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>✈️ Benchmark entre Empresas Aéreas</h1>", unsafe_allow_html=True)
 st.divider()
 
 r1, r2, r3 = carregar_metricas()

@@ -24,7 +24,7 @@ df = pd.read_sql_query("SELECT * FROM voos;", conn)
 # ====================================
 # Título Principal e Subtítulo
 # ====================================
-st.markdown("<h1 style='text-align: center;'>📈 ANÁLISE DE DESEMPENHO OPERACIONAL </h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>📈 Análise de Desempenho Operacional </h1>", unsafe_allow_html=True)
 st.subheader('', divider=True)
 
 # ====================================
