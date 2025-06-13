@@ -2,3 +2,4 @@ frontend/__pycache__
 data/__pycache__
 voos.db
 data/voos.db
+data\voos.db

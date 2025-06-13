@@ -50,6 +50,102 @@ else:
 st.subheader("", divider = True)
 
 st.markdown(f"<h2 style='text-align: center;'>Destinos Mais Procurados</h2>", unsafe_allow_html=True)
+col4,col5 = st.columns(2)
+with col4.container(border = True):
+    total_passageiros_destino_query = """
+    SELECT destino_continente AS Continente,
+        SUM(passageiros_pagos) AS Total_Passageiros
+    FROM voos
+    WHERE destino_continente IS NOT NULL
+    GROUP BY destino_continente
+    ORDER BY Total_Passageiros DESC
+    LIMIT 10;
+    """
+    df_destino = pd.read_sql_query(total_passageiros_destino_query, conn)
+    df_destino["Tipo"] = "Destino"
+
+    total_passageiros_origem_query = """
+    SELECT origem_continente AS Continente,
+        SUM(passageiros_pagos) AS Total_Passageiros
+    FROM voos
+    WHERE origem_continente IS NOT NULL
+    GROUP BY origem_continente
+    ORDER BY Total_Passageiros DESC
+    LIMIT 10;
+    """
+    df_origem = pd.read_sql_query(total_passageiros_origem_query, conn)
+    df_origem["Tipo"] = "Origem"
+
+    df_continentes = pd.concat([df_destino, df_origem])
+    df_continentes = df_continentes.sort_values(by="Total_Passageiros", ascending=False)
+
+    if not df_continentes.empty:
+        fig_continentes = px.bar(
+            df_continentes,
+            x="Total_Passageiros",
+            y="Continente",
+            color="Tipo",
+            color_discrete_sequence = px.colors.sequential.GnBu_r,
+            barmode="group",
+            orientation="h",
+            text="Total_Passageiros",
+            labels={"Total_Passageiros": "Total de Passageiros"}
+        )
+        fig_continentes.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+        fig_continentes.update_layout(
+            showlegend=True,
+            yaxis=dict(autorange="reversed")
+        )
+        st.markdown(f"<h3 style='text-align: center;'>Top Continentes (Origem e Destino) </h3>", unsafe_allow_html=True)
+        st.plotly_chart(fig_continentes, use_container_width=True)
+
+    with col5.container(border = True):        
+        df_destino = pd.read_sql_query("""
+            SELECT
+                destino_pais AS Pais,
+                SUM(passageiros_pagos) AS Total_Passageiros,
+                'Destino' AS Tipo
+            FROM voos
+            WHERE destino_pais IS NOT NULL
+            GROUP BY destino_pais
+            ORDER BY Total_Passageiros DESC
+            LIMIT 10;
+        """, conn)
+
+        df_origem = pd.read_sql_query("""
+            SELECT
+                origem_pais AS Pais,
+                SUM(passageiros_pagos) AS Total_Passageiros,
+                'Origem' AS Tipo
+            FROM voos
+            WHERE origem_pais IS NOT NULL
+            GROUP BY origem_pais
+            ORDER BY Total_Passageiros DESC
+            LIMIT 10;
+        """, conn)
+
+        df_combinado = pd.concat([df_destino, df_origem])
+        df_combinado = df_combinado.sort_values(by='Total_Passageiros', ascending=False)
+
+        fig_combinado = px.bar(
+            df_combinado,
+            x='Total_Passageiros',
+            y='Pais',
+            color='Tipo',
+            color_discrete_sequence = px.colors.sequential.GnBu_r,
+            barmode='group',
+            orientation='h',
+            labels={'Pais': 'País', 'Total_Passageiros': 'Total de Passageiros'}
+        )
+
+        fig_combinado.update_traces(texttemplate='%{x:,}', textposition='outside')
+
+        fig_combinado.update_layout(
+            yaxis=dict(autorange="reversed")
+        )
+        st.markdown(f"<h3 style='text-align: center;'>Top 10 Países de Origem e Destino (Agrupado) </h3>", unsafe_allow_html=True)
+        st.plotly_chart(fig_combinado, use_container_width=True)
+
 cursor.execute("SELECT DISTINCT natureza FROM voos ORDER BY natureza")
 naturezas = [row[0] for row in cursor.fetchall() if row[0] is not None]
 
@@ -76,26 +172,27 @@ GROUP BY
     destino_sigla, destino_nome
 ORDER BY
     Total_Passageiros_Destino DESC
-LIMIT 10;
+LIMIT 11;
 """
 
 df_destinos_mais_procurados = pd.read_sql_query(destinos_query, conn)
 
 if not df_destinos_mais_procurados.empty:
-    fig_destinos = px.bar(
-        df_destinos_mais_procurados,
-        x='destino_nome',
-        y='Total_Passageiros_Destino',
-        title=f'Top 10 Destinos por Passageiros ({natureza_escolhida})',
-        labels={'destino_nome': 'Aeroporto de Destino', 'Total_Passageiros_Destino': 'Total de Passageiros'},
-        color='destino_nome',
-        text='Total_Passageiros_Destino'
-    )
-    fig_destinos.update_traces(texttemplate='%{text:.2s}', textposition='outside')
-    fig_destinos.update_layout(showlegend=False)
-    st.plotly_chart(fig_destinos, use_container_width=True)
-else:
-    st.info(f"Nenhum dado encontrado para os destinos mais procurados com a natureza '{natureza_escolhida}'.")
+    with st.container(border = True):
+        st.markdown(f"<h3 style='text-align: center;'>Top 10 Destinos por Passageiros ({natureza_escolhida})</h3>", unsafe_allow_html=True)
+        fig_destinos = px.bar(
+            df_destinos_mais_procurados,
+            x='destino_nome',
+            y='Total_Passageiros_Destino',
+            labels={'destino_nome': 'Aeroporto de Destino', 'Total_Passageiros_Destino': 'Total de Passageiros'},
+            color='destino_nome',
+            color_discrete_sequence=px.colors.sequential.ice,
+            text='Total_Passageiros_Destino'
+
+        )
+        fig_destinos.update_traces(texttemplate='%{text:.4s}', textposition='outside')
+        fig_destinos.update_layout(showlegend=False)
+        st.plotly_chart(fig_destinos, use_container_width=True)
 
 st.subheader("", divider = True)
 st.markdown("<h2 style='text-align: center;'>Regiões que Mais Movimentam Passageiros</h2>", unsafe_allow_html=True)
@@ -143,7 +240,6 @@ with tab_Continente:
 
             st.info(f"Nenhum dado de voo encontrado para o continente selecionado.")
         st.subheader("", divider = True)
-        st.subheader(f"Total de Decolagens por Mês - {continente_selecionado}")
 
         query_decolagens_continente_mensal = """
         SELECT
@@ -166,92 +262,31 @@ with tab_Continente:
         )
 
         if not df_decolagens_continente.empty:
-            df_decolagens_continente['Data'] = pd.to_datetime(df_decolagens_continente['ano'].astype(str) + '-' + df_decolagens_continente['mes'].astype(str) + '-01')
-            fig_decolagens_continente = px.line(
-                df_decolagens_continente,
-                x='Data',
-                y='Total_Decolagens',
-                title=f'Total de Decolagens por Mês - {continente_selecionado}',
-                labels={'Data': 'Mês/ano', 'Total_Decolagens': 'Número de Decolagens'},
-                markers=True,
-                line_shape='linear'
-            )
-            fig_decolagens_continente.update_xaxes(
-                dtick="M1",
-                tickformat="%b\n%Y",
-                ticklabelmode="period"
-            )
-            st.plotly_chart(fig_decolagens_continente, use_container_width=True)
-        else:
-            st.info(f"Nenhum dado de decolagens por mês encontrado para {continente_selecionado}.")
+            with st.container(border = True):
+                st.markdown(f"<h3 style='text-align: center;'>Total de Decolagens por Mês - {continente_selecionado} </h3>", unsafe_allow_html=True)
+                df_decolagens_continente['Data'] = pd.to_datetime(df_decolagens_continente['ano'].astype(str) + '-' + df_decolagens_continente['mes'].astype(str) + '-01')
+                fig_decolagens_continente = px.line(
+                    df_decolagens_continente,
+                    x='Data',
+                    y='Total_Decolagens',
+                    labels={'Data': 'Mês/ano', 'Total_Decolagens': 'Número de Decolagens'},
+                    markers=True,
+                    line_shape='linear'
+                )
+                fig_decolagens_continente.update_xaxes(
+                    dtick="M1",
+                    tickformat="%b\n%Y",
+                    ticklabelmode="period"
+                )
+                st.plotly_chart(fig_decolagens_continente, use_container_width=True)
             
-    st.subheader("",divider = True)
-    col4, col5 = st.columns(2)
-    with col4.container(border = True):
-        st.subheader("Top Continentes(Destino)")
-        total_passageiros_destino_query = f"""
-        SELECT
-            destino_continente AS Regiao,
-            SUM(passageiros_pagos) AS total_passageiros_regiao
-        FROM
-            voos
-        WHERE
-            destino_continente IS NOT NULL
-        GROUP BY
-            destino_continente
-        ORDER BY
-            total_passageiros_regiao DESC
-        LIMIT 10;
-        """
-        df_regioes_destino = pd.read_sql_query(total_passageiros_destino_query, conn)
 
-        if not df_regioes_destino.empty:
-            fig_continentes_destino = px.bar(
-                df_regioes_destino,
-                x='total_passageiros_regiao',
-                y='Regiao',
-                labels={'Regiao': 'Continente', 'total_passageiros_regiao': 'Total de Passageiros'},
-                color='Regiao',
-                text='total_passageiros_regiao'
-            )
-            fig_continentes_destino.update_traces(texttemplate='%{text:.2s}', textposition='outside')
-            fig_continentes_destino.update_layout(showlegend=False)
-            st.plotly_chart(fig_continentes_destino, use_container_width=True)
-        else:
-            st.info("Nenhum dado encontrado para continentes de destino.")
+            
 
-with col5.container(border = True):
-    st.subheader("Top Continentes(Origem)")
-    total_passageiros_origem_query = f"""
-    SELECT
-        origem_continente AS Regiao,
-        SUM(passageiros_pagos) AS total_passageiros_regiao
-    FROM
-        voos
-    WHERE
-        origem_continente IS NOT NULL
-    GROUP BY
-        origem_continente
-    ORDER BY
-        total_passageiros_regiao DESC
-    LIMIT 10;
-    """
-    df_regioes_origem = pd.read_sql_query(total_passageiros_origem_query, conn) # Variável para dados de origem
 
-    if not df_regioes_origem.empty:
-        fig_continentes_origem = px.bar( 
-            df_regioes_origem,
-            x='total_passageiros_regiao',
-            y='Regiao',
-            labels={'Regiao': 'Continente', 'total_passageiros_regiao': 'Total de Passageiros'},
-            color='Regiao',
-            text='total_passageiros_regiao'
-        )
-        fig_continentes_origem.update_traces(texttemplate='%{text:.2s}', textposition='outside')
-        fig_continentes_origem.update_layout(showlegend=False)
-        st.plotly_chart(fig_continentes_origem, use_container_width=True)
-    else:
-        st.info("Nenhum dado encontrado para continentes de origem.") 
+
+        
+
 
     
 with tab_Estado:
@@ -312,14 +347,15 @@ with tab_Estado:
             conn,
             params=(pais_selecionado,pais_selecionado)
         )
-
+        st.subheader("",divider = True)
+        
+        
         if not df_decolagens_pais.empty:
             df_decolagens_pais['Data'] = pd.to_datetime(df_decolagens_pais['ano'].astype(str) + '-' + df_decolagens_pais['mes'].astype(str) + '-01')
             fig_decolagens_pais = px.line(
                 df_decolagens_pais,
                 x='Data',
                 y='Total_Decolagens_pais',
-                title=f'Total de Decolagens por Mês - {pais_selecionado}',
                 labels={'Data': 'Mês/ano', 'Total_Decolagens': 'Número de Decolagens'},
                 markers=True,
                 line_shape='linear'
@@ -329,81 +365,15 @@ with tab_Estado:
                 tickformat="%b\n%Y",
                 ticklabelmode="period"
             )
-            st.plotly_chart(fig_decolagens_pais, use_container_width=True)
-        else:
-            st.info(f"Nenhum dado de decolagens por mês encontrado para {pais_selecionado}.")
-        st.subheader("", divider = True)
-    col6,col7 = st.columns(2)
-    with col6.container(border = True):
-        regiao_col = 'destino_pais' 
-        total_passageiros_regiao_query = f"""
-        SELECT
-            destino_pais AS Regiao,
-            SUM(passageiros_pagos) AS total_passageiros_regiao
-        FROM
-            voos
-        WHERE
-            destino_pais IS NOT NULL
-        GROUP BY
-            destino_pais
-        ORDER BY
-            total_passageiros_regiao DESC
-        LIMIT 10;
-        """
-        df_regioes = pd.read_sql_query(total_passageiros_regiao_query, conn)
-        st.subheader("Top 10 Países de Destinos")
-        if not df_regioes.empty:
-            fig_regioes = px.bar(
-                df_regioes,
-                x='total_passageiros_regiao',
-                y='Regiao',
-                labels={'Regiao': 'País', 'total_passageiros_regiao': 'Total de Passageiros'},
-                color='Regiao',
-                text='total_passageiros_regiao'
-            )
-            fig_regioes.update_traces(texttemplate='%{text:.2s}', textposition='outside')
-            fig_regioes.update_layout(showlegend=False)
-            st.plotly_chart(fig_regioes, use_container_width=True)
-        else:
-            st.info("Nenhum dado encontrado para países.")
-
-    with col7.container(border = True):    
-        st.subheader("Top 10 Países de Origem")    
-        total_passageiros_regiao_query_origem = f"""
-        SELECT
-            origem_pais AS Regiao_origem,
-            SUM(passageiros_pagos) AS total_passageiros_regiao_origem
-        FROM
-            voos
-        WHERE
-            origem_pais IS NOT NULL
-        GROUP BY
-            origem_pais
-        ORDER BY
-            total_passageiros_regiao_origem DESC
-        LIMIT 10;
-        """
-        df_regioes_origem = pd.read_sql_query(total_passageiros_regiao_query_origem, conn)
-        if not df_regioes_origem.empty:
-            fig_regioes = px.bar(
-                df_regioes_origem,
-                x='total_passageiros_regiao_origem',
-                y='Regiao_origem',
-                labels={'Regiao_origem': 'País', 'total_passageiros_regiao_origem': 'Total de Passageiros'},
-                color='Regiao_origem',
-                text='total_passageiros_regiao_origem'
-            )
-            fig_regioes.update_traces(texttemplate='%{text:.2s}', textposition='outside')
-            fig_regioes.update_layout(showlegend=False)
-            st.plotly_chart(fig_regioes, use_container_width=True)
-        else:
-            st.info("Nenhum dado encontrado para países.")
-
+            with st.container(border = True):
+                st.markdown(f"<h3 style='text-align: center;'>Total de Decolagens por Mês - {pais_selecionado} </h3>", unsafe_allow_html=True)
+                st.plotly_chart(fig_decolagens_pais, use_container_width=True)
+        
 st.subheader("", divider = True)
+
+
 st.markdown(f"<h2 style='text-align: center;'>Estatísticas Gerais por Aeroporto</h2>", unsafe_allow_html=True)
 pais_query = """
-    SELECT DISTINCT Destino_pais FROM voos
-    UNION
     SELECT DISTINCT destino_pais FROM voos
     ORDER BY 1
 """
