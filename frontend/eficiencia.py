@@ -52,7 +52,6 @@ c1, c2, c3 = st.columns(3)
 c1.metric('Litros consumidos por KM', kmcomb, border=True)
 c2.metric('Eficiência por Passageiro (Passageiros/Litro)', passcomb, border=True)
 c3.metric('Consumo Médio de Combustível', mediacombustivel, border=True)
-=======
 # Exibe as métricas nas colunas com o novo estilo (sem ícones do Font Awesome)
 # Primeira linha de métricas
 c1.container(border=True).metric('Total de Empresas', int(total_empresas))
