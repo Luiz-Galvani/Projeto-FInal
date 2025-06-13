@@ -11,8 +11,8 @@ _config.set_option("theme.textColor", "#31333F")
 def main():
     criarTable()
     st.set_page_config(
-        page_title="Dashboard",
-        page_icon="🏠",
+        page_title="ANAC",
+        page_icon="✈️",
         layout="wide",
         initial_sidebar_state="expanded",
     )
